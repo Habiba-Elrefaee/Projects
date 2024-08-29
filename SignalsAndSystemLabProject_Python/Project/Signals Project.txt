@@ -1,0 +1,161 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import sounddevice as sd
+from scipy import pi
+from scipy.fftpack import fft
+from scipy.signal import find_peaks
+
+#Milestone 1:
+𝑡 = np. linspace(0 , 6 , 12*1024)
+f1 = 392
+F1 = 196
+
+f2 = 261.63
+F2 = 246.93
+
+f3 = 440
+F3 = 220
+
+f4 = 329.63
+F4 = 164.81
+
+t1 = 0
+T1 = 1.5
+
+t2 = 2
+T2 = 3
+
+t3 = 4
+T3 = 5
+
+t4 = 5.5
+T4 = 6
+
+x1= (np.sin(2*np.pi*F1*t) + np.sin(2*np.pi*f1*t))
+
+y1=np.where(np.logical_and(t>t1, t<T1), x1,0)
+
+
+x2= (np.sin(2*np.pi*F2*t) + np.sin(2*np.pi*f2*t))
+
+y2= np.where(np.logical_and(t>t2, t<T2), x2,0)
+
+
+x3= (np.sin(2*np.pi*F3*t) + np.sin(2*np.pi*f3*t))
+
+y3= np.where(np.logical_and(t>t3, t<T3), x3,0)
+
+
+x4= (np.sin(2*np.pi*F4*t) + np.sin(2*np.pi*f4*t))
+
+y4= np.where(np.logical_and(t>t4, t<T4), x4,0)
+
+ytotal = y1 + y2 + y3 + y4
+'''
+plt.plot(t, ytotal)
+#plt.title ('Time Domain Signal without noise')
+plt.xlabel('Time')
+plt.ylabel('Amplitude')
+sd.play(ytotal, 3 * 1024)
+'''
+#run milestone 1 seperately then milestone 2 for freq domain to appear in both cases
+#Milestone 2:
+B=1024
+N = 3*1024
+f = np.linspace(0 , 512 , N)
+
+y_f = fft(ytotal)
+y_f = 2/N * np.abs(y_f [0:N])
+
+#without noise
+frequency = np.linspace (0.0, B, N)
+freq_data = fft(ytotal) #Complex Signal
+y = 2/N * np.abs (freq_data [0:N])
+plt.plot(frequency, y)
+plt.title('Frequency domain Signal without noise')
+plt.xlabel('Frequency in Hz')
+plt.ylabel('Amplitude')
+plt.show()
+
+plt.plot(frequency, y)
+plt.title('Filtered Noise in Frequency Domain')
+plt.xlabel('Frequency in Hz')
+plt.ylabel('Amplitude')
+plt.show()
+
+fn1 = np.random.randint(0, 512, 1)
+fn2 = np.random.randint(0, 512, 1)
+n = np.sin(2*np.pi*fn1*t)+np.sin(2*np.pi*fn2*t)
+
+yn = ytotal+n
+yn_f = fft(yn)
+yn_f = 2/N * np.abs(yn_f [0:N])
+
+#with noise
+frequency = np.linspace (0.0, B, N)
+freq_data = fft(yn) #Complex Signal
+y = 2/N * np.abs (freq_data [0:N])
+plt.plot(frequency, y)
+plt.title('Frequency domain Signal with noise')
+plt.xlabel('Frequency in Hz')
+plt.ylabel('Amplitude')
+plt.show()
+
+plt.plot (t, yn)
+plt.title ('Time Domain Signal with noise')
+plt.xlabel ('Time')
+plt.ylabel ('Amplitude')
+plt.show ()
+
+plt.plot(t, ytotal)
+plt.title('Filtered Noise in Time Domain')
+plt.xlabel('Time')
+plt.ylabel('Amplitude')
+
+# Trying to find the two random noise frequencies:
+max_original_peak = np.max(y_f)  #This is the maximum peak of my original signal without noise (ytotal)
+
+# Find the peaks in the signal with noise:
+peaks, _ = find_peaks(yn_f)
+
+# Then filter the peaks higher than the maximum peak of the original signal (ytotal):
+peaks_higherThan_original = peaks[yn_f[peaks] > max_original_peak]
+
+# Then round the freq indices to the next integer:
+round_freq_indices = (frequency[peaks_higherThan_original] + 0.5).astype(int)
+
+# Then I'll use the first two rounded freq indices as the random noise frequencies:
+random_noise_frequencies = frequency[round_freq_indices[:2]]
+
+# After that I'll round the frequencies to the next integer:
+round_frequencies = (random_noise_frequencies + 0.5).astype(int)
+
+# Lastly filter the noise by:
+filtered_noise = yn - (np.sin(2*np.pi*round_frequencies[0]*t) + np.sin(2*np.pi*round_frequencies[1]*t))
+
+# Then I have to convert the filtered signal to frquency domain by:
+filtered_noise_freq = fft(filtered_noise)
+filtered_noise_freq = 2/N * np.abs(filtered_noise_freq [0:N])
+'''
+#time domain with noise
+plt.plot (t, yn)
+plt.title ('Time Domain Signal with noise')
+plt.xlabel ('Time')
+plt.ylabel ('Amplitude')
+plt.show ()
+
+
+# Plot the filtered noise in time domain
+plt.plot(t, filtered_noise)
+plt.title('Filtered Noise in Time Domain')
+plt.xlabel('Time')
+plt.ylabel('Amplitude')
+plt.show()
+
+# Plot the filtered noise in frequency domain
+plt.plot(t, filtered_noise_freq)
+plt.title('Filtered Noise in Frequency Domain')
+plt.xlabel('Frequency in Hz')
+plt.ylabel('Amplitude')
+plt.show()
+'''
